@@ -20,8 +20,9 @@ instance Functor Validated where
 instance Applicative Validated where
   (Valid f)       <*> v                = fmap f v
   (Doubtful f ms) <*> (Valid v)        = Doubtful (f v) ms
-  (Doubtful f ms) <*> (Doubtful v ms2) = Doubtful (f v) (ms2 ++ ms)
-  v               <*> v2               = Invalid $ (messages v2) ++ (messages v)
+  (Doubtful f ms) <*> (Doubtful v ms2) = Doubtful (f v) (ms ++ ms2)
+  (Doubtful _  _) <*> (Invalid    ms2) = Invalid ms2
+  (Invalid ms)    <*> _                = Invalid ms
 
   pure v = Valid v
 
@@ -31,6 +32,6 @@ instance Monad Validated where
   (Doubtful v m) >>= f = case f v of
             Valid r -> Doubtful r m
             Doubtful r m2 -> Doubtful r (m ++ m2)
-            Invalid m2    -> Invalid (m ++ m2)
+            Invalid m2    -> Invalid m2
 
   return = pure

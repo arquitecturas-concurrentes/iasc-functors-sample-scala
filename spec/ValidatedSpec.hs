@@ -24,20 +24,22 @@ spec = do
 
   describe "<*>" $ do
     it "should keep messages on doubtful" $ do
-      (Doubtful (+1) ["bar"]) <*> (Doubtful 1 ["foo"])  `shouldBe` (Doubtful 2 ["foo", "bar"])
+      (Doubtful (+1) ["bar"]) <*> (Doubtful 1 ["foo"])  `shouldBe` (Doubtful 2 ["bar", "foo"])
 
-    it "should join messages on invalid and doubtful" $ do
-      (Invalid ["bar"]) <*> (Doubtful 1 ["foo"])  `shouldBe` (Invalid ["foo", "bar"] :: Validated Int)
+    it "should not join messages on invalid and doubtful" $ do
+      (Invalid ["bar"]) <*> (Doubtful 1 ["foo"])  `shouldBe` (Invalid ["bar"] :: Validated Int)
+
+    it "outermost invalid takes precedence" $ do
+      (Invalid ["bar"]) <*> (Invalid ["foo"])  `shouldBe` (Invalid ["bar"] :: Validated Int)
 
     it "should apply function with valids" $ do
       (Valid (+1)) <*> (Valid 1) `shouldBe` (Valid 2)
 
     it "should join messages on doubtful and invalid" $ do
-      (Doubtful (+1) ["bar"]) <*> (Invalid ["foo"]) `shouldBe` (Invalid ["foo", "bar"])
+      (Doubtful (+1) ["bar"]) <*> (Invalid ["foo"]) `shouldBe` (Invalid ["foo"])
 
     it "should integrate with liftA2" $ do
        (liftA2 elem) (Valid 'a') (Valid "hello world") `shouldBe` (Valid False)
-
 
   describe ">>=" $ do
     it "should integrate with do" $ do
@@ -57,3 +59,34 @@ spec = do
       let v1 = Invalid ["foo"] :: Validated (Int -> Int)
       let v2 = Doubtful 1 ["bar"]
       ap v1 v2 `shouldBe` v1 <*> v2
+
+    it "should behave like <*> on doubtful and doubtful" $ do
+      let v1 = Doubtful (+1) ["foo"]
+      let v2 = Doubtful 1 ["bar"]
+      ap v1 v2 `shouldBe` v1 <*> v2
+
+    it "should behave like <*> on invalid and invalid" $ do
+      let v1 = Invalid ["foo"] :: Validated (Int -> Int)
+      let v2 = Invalid ["bar"] :: Validated Int
+      ap v1 v2 `shouldBe` v1 <*> v2
+
+  describe ">>" $ do
+    it "should behave like *> on doubtful and invalid" $ do
+      let v1 = Doubtful 4 ["foo"]
+      let v2 = Invalid ["bar"] :: Validated Int
+      (v1 >> v2) `shouldBe` (v1 *> v2)
+
+    it "should behave like <*> on invalid and doubtful" $ do
+      let v1 = Invalid ["foo"]
+      let v2 = Doubtful 1 ["bar"]
+      (v1 >> v2) `shouldBe` (v1 *> v2)
+
+    it "should behave like <*> on doubtful and doubtful" $ do
+      let v1 = Doubtful 2 ["foo"]
+      let v2 = Doubtful 1 ["bar"]
+      (v1 >> v2) `shouldBe` (v1 *> v2)
+
+    it "should behave like <*> on invalid and invalid" $ do
+      let v1 = Invalid ["foo"]
+      let v2 = Invalid ["bar"] :: Validated Int
+      (v1 >> v2) `shouldBe` (v1 <*> v2)
