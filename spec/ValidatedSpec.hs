@@ -29,3 +29,6 @@ spec = do
 
     it "should keep messages on doubtful" $ do
       (Valid (+1)) <*> (Valid 1) `shouldBe` (Valid 2)
+
+    it "should integrate with liftA2" $ do
+       (liftA2 elem) (Valid 'a') (Valid "hello world") `shouldBe` (Valid False)
