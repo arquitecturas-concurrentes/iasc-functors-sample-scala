@@ -25,3 +25,12 @@ instance Applicative Validated where
 
   pure v = Valid v
 
+instance Monad Validated where
+  (Valid v) >>= f      = f v
+  (Invalid m) >>= _   = (Invalid m)
+  (Doubtful v m) >>= f = case f v of
+            Valid r -> Doubtful r m
+            Doubtful r m2 -> Doubtful r (m ++ m2)
+            Invalid m2    -> Invalid (m ++ m2)
+
+  return = pure
