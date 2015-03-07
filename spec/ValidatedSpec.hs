@@ -2,6 +2,7 @@ module ValidatedSpec (spec) where
 
 import           Test.Hspec
 import           Data.Validated
+import           Control.Applicative
 
 spec :: Spec
 spec = do
@@ -15,3 +16,16 @@ spec = do
     it "should answer doubtful for doubtful" $ do
       fmap (+1) (Doubtful 2 ["foo"]) `shouldBe` (Doubtful 3 ["foo"])
 
+  describe "pure" $ do
+    it "should answer valid" $ do
+      pure 1 `shouldBe` (Valid 1)
+
+  describe "<*>" $ do
+    it "should keep messages on doubtful" $ do
+      (Doubtful (+1) ["bar"]) <*> (Doubtful 1 ["foo"])  `shouldBe` (Doubtful 2 ["foo", "bar"])
+
+    it "should keep messages on invalid" $ do
+      (Invalid ["bar"]) <*> (Doubtful 1 ["foo"])  `shouldBe` (Invalid ["foo", "bar"] :: Validated Int)
+
+    it "should keep messages on doubtful" $ do
+      (Valid (+1)) <*> (Valid 1) `shouldBe` (Valid 2)
